@@ -1,0 +1,26 @@
+spring:
+  data:
+    mongodb:
+      username: root
+      password: root
+      host: localhost
+      port: 27017
+      database: chat_app
+      authentication-database: admin
+  rabbitmq:
+    username: admin
+    password: admin
+    port: 61613
+    host: localhost
+    virtual-host: /stomp
+auth:
+  jwt:
+    signing-key: aW5zdGFodWIoY2h1cGFjaHVwczg0LGs0cjNsMW5zLHN3dHk0NSxpcmluYWZlZG9yb3ZpY2gxOTk1KQ==
+    expiration:
+      access-token: 1800000 # 30 min
+      refresh-token: 604800000 # 1 week
+  url: /api/v1/auth
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.messaging.simp.SimpMessagingTemplate: DEBUG

@@ -1,0 +1,56 @@
+.user-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+}
+.user-item:hover {
+    background-color: #85bff1;
+}
+
+.user-item.active {
+    background-color: #cdebff;
+    color: #4f4f4f;
+}
+
+.user-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.status-container {
+    position: relative;
+    display: inline-block;
+}
+
+.status-circle {
+    width: 9px;
+    height: 9px;
+    border: 2px solid white;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+}
+
+.online {
+    background-color: green;
+}
+
+.offline {
+    background-color: darkred;
+}
+
+
+.nbr-msg {
+    margin-left: auto;
+    background-color: #f8fa6f;
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+}
