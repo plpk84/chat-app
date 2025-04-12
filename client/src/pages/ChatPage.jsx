@@ -1,84 +1,141 @@
-import React, {useEffect, useState, useContext, useRef} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
+import {AuthContext} from "../contexts/AuthProvider";
+import {useNavigate} from "react-router-dom";
+import {api} from "../services/api";
+import "../styles/Chat.css"
+import UserItem from "../components/user/UserItem";
 import SockJS from "sockjs-client";
 import {Client} from "@stomp/stompjs";
-import {AuthContext} from "../contexts/AuthContext";
-import {useNavigate} from "react-router-dom";
-import {getMessageHistory, getUsersList} from "../services/api";
-import "../styles/Chat.css"
-import UserComponent from "../components/UserComponent";
-import UserItem from "../components/UserItem";
+import MessageList from "../components/message/MessageList";
+import UserList from "../components/user/UserList";
+
 
 const ChatPage = () => {
-  const {user, logout} = useContext(AuthContext);
-  const stompClient = useRef(null);
+  const {authState, logout} = useContext(AuthContext);
+  const [client, setClient] = useState(null);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState({});
   const [messages, setMessages] = useState([]);
-  const [newMessages, setNewMessages] = useState({});
+  const [notificationCount, setNotificationCount] = useState({});
   const [messageText, setMessageText] = useState("");
   const navigate = useNavigate();
-  const messageEndRef = useRef(null);
-  const [offset, setOffset] = useState(0);
-  const [size, setSize] = useState(10);
-  
+  const [contactsOffset, setContactsOffset] = useState(0);
+  const [messageOffset, setMessageOffset] = useState(0);
+  const messagesContainerRef = useRef(null);
+  const [messageFetching, setMessageFetching] = useState(false);
+  const [allMessageFetched, setAllMessageFetched] = useState(false)
+
   useEffect(() => {
-    if (localStorage.getItem("accessToken") === null) {
-      navigate("/login");
+    if (!authState.accessToken) {
+      if (client) {
+        client.deactivate();
+        setClient(null);
+      }
+      return;
+    }
+    const getConnection = async () => {
+      const socket = new SockJS(`http://localhost:8080/ws`);
+      const client = new Client(
+        {
+          webSocketFactory: () => socket,
+          connectHeaders: {
+            Authorization: `Bearer ${authState.accessToken}`
+          },
+          onConnect: () => {
+
+            console.log('Connected to WebSocket');
+
+            const publicSub = client.subscribe(
+              '/topic/public',
+              onTopicMessageReceived,
+              {
+                id: `${authState.user.username}-public-subscription`
+              }
+            );
+            const directMessagesSub = client.subscribe(
+              `/queue/${authState.user.username}.messages`,
+              onDirectMessageReceived,
+              {
+                id: `${authState.user.username}-direct-messages-subscription`
+              }
+            );
+            setSubscriptions([publicSub, directMessagesSub]);
+          },
+          onStompError: onError,
+          onDisconnect: () => {
+            console.log(`Disconnected from WebSocket`)
+            subscriptions.forEach(sub => sub.unsubscribe(
+              {
+                Authorization: `Bearer ${authState.accessToken}`
+              }
+            ));
+            setSubscriptions([]);
+          },
+          reconnectDelay: 5000,
+          heartbeatIncoming: 4000,
+          heartbeatOutgoing: 4000
+        }
+      );
+      setClient(client);
+      client.activate()
+    }
+    getConnection();
+
+    return () => {
+      if (client) {
+        client.deactivate();
+        setClient(null);
+      }
+    }
+  }, [authState.accessToken]);
+
+  const loadContacts = async () => {
+    setContactsOffset(0);
+    const response = await api.get(`/users`, {
+      params: {offset: contactsOffset, size: 3},
+      headers: {Authorization: `Bearer ${authState.accessToken}`},
+    });
+    if (authState.user) {
+      setUsers(response.data.filter(u => u.username !== authState.user.username));
+    }
+  };
+
+  useEffect(() => {
+    if (!authState.accessToken) {
       return;
     }
     loadContacts();
-    connect();
-    
-    return () => {
-      if (stompClient) {
-        stompClient.current.deactivate();
-      }
-    };
-  }, [navigate,user]);
-  
+  }, [authState.accessToken])
+
+  const scrollHandler = () => {
+    if (messagesContainerRef.current.scrollTop < -82) {
+      setMessageFetching(true)
+    }
+    if (messagesContainerRef.current.scrollTop === 0) {
+      resetNewMessagesCounter();
+    }
+  }
+
   useEffect(() => {
-    console.log(`user changed ${JSON.stringify(users)}`)
-  }, [users])
-  
-  const loadContacts = () => {
-    const response = getUsersList(offset, size)
-    .then(response => {
-      const filtered = response.data.filter(u => u.username !== user?.username)
-      setUsers(filtered)
-    });
-  };
-  
-  const connect = () => {
-    const socket = new SockJS("http://localhost:8080/ws");
-    stompClient.current = new Client(
-      {
-        webSocketFactory: () => socket,
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-        onConnect: onConnected,
-        onStompError: onError
+    const current = messagesContainerRef.current;
+    if (current) {
+      current.addEventListener('scroll', scrollHandler)
+    }
+
+    return () => {
+      if (current) {
+        current.removeEventListener('scroll', scrollHandler);
       }
-    )
-    stompClient.current.activate();
-  }
-  
-  const onConnected = () => {
-    console.log('Connected to WebSocket');
-    
-    console.log('Connected to WebSocket /topic/public');
-    stompClient.current.subscribe('/topic/public', onTopicMessageReceived);
-    
-    console.log(`Connected to WebSocket /queue/${user.username}.messages`);
-    stompClient.current.subscribe(`/queue/${user.username}.messages`, onDirectMessageReceived);
-  }
-  
+    }
+  }, [selectedUser])
+
   const onDirectMessageReceived = (message) => {
-    console.log(`/queue/${user.username}.messages, receive message`);
     const newMessage = JSON.parse(message.body);
+    console.log(`/queue/${authState.user.username}.messages, receive message:\n${JSON.stringify(newMessage)}`);
     const senderId = newMessage.senderId
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-    setNewMessages((prevNewMessages) => {
+    setMessages(prevMessages => [newMessage, ...prevMessages]);
+    setNotificationCount((prevNewMessages) => {
       return {
         ...prevNewMessages,
         [senderId]: prevNewMessages[senderId] ? prevNewMessages[senderId] + 1 : 1,
@@ -86,8 +143,8 @@ const ChatPage = () => {
     });
   }
   const onTopicMessageReceived = (message) => {
-    console.log(`/topic/public receive message`);
     const updatedUser = JSON.parse(message.body);
+    console.log(`/topic/public, receive message:\n ${JSON.stringify(updatedUser)}`);
     setUsers((prevUsers) =>
       prevUsers.map((u) =>
         u.username === updatedUser.username
@@ -96,126 +153,122 @@ const ChatPage = () => {
       )
     );
   }
-  
-  
+
   const onError = (err) => {
-    console.log(err);
+    console.error("Error connecting to WebSocket:", err);
   };
-  
-  const onLogout =  async () => {
-    await stompClient.current.deactivate();
-    console.log('Logout');
-    logout();
-    console.log('LOGOUNT SEND EVENT');
+
+  const onLogout = async () => {
+    if (client) {
+      await client.deactivate();
+      setClient(null);
+    }
+    await logout();
     navigate("/login")
   }
-  
+
   const onProfile = async () => {
-    await stompClient.current.deactivate();
+    if (client) {
+      await client.deactivate();
+      setClient(null);
+    }
     navigate("/")
   }
-  
-  const handleUserSelect = async (u) => {
-    setSelectedUser(u);
-    const response = await getMessageHistory(user.username, u.username);
-    const responseMessages = response.data
-    setNewMessages(prev => ({...prev, [u.username]: 0}));
-    setMessages(responseMessages)
-    setTimeout(scrollToBottom, 10);
-  };
-  
-  const scrollToBottom = () => {
-    if (messageEndRef.current) {
-      messageEndRef.current.scrollTop = messageEndRef.current.scrollHeight;
+
+  const loadMessages = (username) => {
+    api.get(`/messages/${authState.user.username}/${username}`, {
+      headers: {Authorization: `Bearer ${authState.accessToken}`},
+      params: {offset: messageOffset, size: 20},
+    }).then(
+      response => {
+        const length = response.data.length
+        setMessageFetching(false)
+        if (length > 0) {
+          setMessages(prevState => [...prevState, ...response.data]);
+          setMessageOffset(prevState => prevState + 1);
+        } else if (length === 0) {
+          setAllMessageFetched(true);
+        }
+      }
+    )
+  }
+  useEffect(() => {
+    if (messageFetching && !allMessageFetched) {
+      loadMessages(selectedUser.username)
     }
-  }
-  
-  const isScrolledToBottom = () => {
-    if (!messageEndRef.current) return false;
-    const {scrollTop, scrollHeight, clientHeight} = messageEndRef.current;
-    return scrollHeight - scrollTop === clientHeight;
-  }
-  
+  }, [messageFetching, allMessageFetched])
+  const handleUserSelect = async (u) => {
+    setAllMessageFetched(false)
+    if (selectedUser?.username !== u.username) {
+      setSelectedUser(u);
+      setMessageFetching(true)
+      setMessageOffset(0)
+      setMessages([])
+    }
+    resetNewMessagesCounter();
+  };
+
   const resetNewMessagesCounter = () => {
-    if (selectedUser && isScrolledToBottom()) {
-      setNewMessages((prev) => ({
+    if (selectedUser) {
+      setNotificationCount((prev) => ({
         ...prev,
         [selectedUser.username]: 0,
       }));
     }
   };
-  useEffect(() => {
-    const messagesContainer = messageEndRef.current;
-    if (messagesContainer) {
-      messagesContainer.addEventListener("scroll", resetNewMessagesCounter);
-    }
-    
-    return () => {
-      if (messagesContainer) {
-        messagesContainer.removeEventListener("scroll", resetNewMessagesCounter);
-      }
-    };
-  }, [selectedUser, messages]);
+
   const sendMessage = () => {
     if (!messageText.trim()) return;
-    
+
+    if (!client || !client.connected) {
+      console.error("WebSocket client is not connected");
+      return;
+    }
     const message = {
-      senderId: user.username,
+      senderId: authState.user.username,
       recipientId: selectedUser.username,
       content: messageText,
       timestamp: new Date()
     };
-    
-    stompClient.current.publish({
+
+    client.publish({
       destination: "/app/chat",
       body: JSON.stringify(message)
     });
-    setMessages([...messages, message])
+
+    setMessages([message, ...messages])
     setMessageText("");
-    setTimeout(scrollToBottom, 0);
   };
-  
+
   return (
     <div className="chat-container">
       {/* Список пользователей */}
-      <div className="users-list">
+      <div className="left-panel">
         <div className="users-list-container">
-          {/*<div onClick={onProfile}>*/}
-          {/*  <UserItem user={user}/>*/}
-          {/*</div>*/}
+          <div onClick={async () => await onProfile()}>
+            <UserItem user={authState?.user}/>
+          </div>
           <div>
             <h2>Users</h2>
             <span onClick={loadContacts}>Refresh Users</span>
           </div>
-          <ul>
-            {users.map((u) => (
-              <UserComponent
-                key={u.username}
-                user={{
-                  ...u,
-                  isSelected: selectedUser?.username === u.username,
-                }}
-                newMessages={newMessages}
-                onSelect={async () => await handleUserSelect(u)}
-              />
-            ))}
-          </ul>
+          <UserList users={users}
+                    selectedUsername={selectedUser?.username}
+                    notificationCount={notificationCount}
+                    handleClick={handleUserSelect}
+          />
         </div>
         <div>
-          <a className="redirect-button" onClick={async ()=>await onLogout()}>Logout</a>
+          <a className="redirect-button" onClick={async () => await onLogout()}>Logout</a>
         </div>
       </div>
       {/* Чат */}
       {selectedUser ? (
         <div className="chat-area">
-          <div className="messages" ref={messageEndRef}>
-            {messages.map((msg, index) => (
-              <div key={index}
-                   className={`message ${msg.senderId === user?.username ? "sent" : "received"}`}>
-                {msg.content}
-              </div>
-            ))}
-          </div>
+          <MessageList ref={messagesContainerRef}
+                       messages={messages}
+                       user={authState.user}
+          />
           <div className="input-area">
             <input
               type="text"
@@ -228,7 +281,7 @@ const ChatPage = () => {
         </div>
       ) : (
         <div className="chat-area">
-        
+
         </div>
       )}
     </div>

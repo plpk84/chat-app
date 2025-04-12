@@ -31,6 +31,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
+        if (request.getServletPath().contains("/api/v1/auth") &&
+                (request.getServletPath().contains("/login") ||
+                        request.getServletPath().contains("/register") ||
+                        request.getServletPath().contains("/refresh-token"))) {
+            log.info("Request on /login,/register,/refresh-token");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);

@@ -1,7 +1,6 @@
-import React, {useState, useContext} from "react";
-import {loginUser} from "../services/api";
+import React, {useContext, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {AuthContext} from "../contexts/AuthContext";
+import {AuthContext} from "../contexts/AuthProvider";
 import "../styles/Chat.css"
 
 const LoginPage = () => {
@@ -9,22 +8,22 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const {login} = useContext(AuthContext);
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await loginUser({username, password});
-      login(response.data);
+    const result = await login({username, password});
+    console.log(result)
+    if (result.success) {
       navigate("/");
-    } catch (error) {
-      alert("Invalid credentials.");
+    } else {
+      console.error("Login Failed ", result.error);
     }
   };
-  
+
   const handleRegister = () => {
     navigate("/register");
   }
-  
+
   return (
     <div className="user-form">
       <h2>Login</h2>

@@ -1,34 +1,28 @@
-import React, { useState } from "react";
-import { recoverUser } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import React, {useContext, useEffect} from "react";
+import {useNavigate} from "react-router-dom";
+import {AuthContext} from "../contexts/AuthProvider";
 
 const RecoverPage = () => {
-  const [token, setToken] = useState("");
+  const {recoverUser} = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await recoverUser(token);
-      alert("Account recovered successfully!");
-      navigate("/login");
-    } catch (error) {
-      alert("Invalid recovery token.");
+  useEffect(() => {
+    const recovering = async () => {
+      try {
+        await recoverUser();
+        alert("Account recovered successfully!");
+        navigate("/login");
+      } catch (error) {
+        alert("No recovery token.");
+        navigate("/register")
+      }
     }
-  };
+    recovering();
+  }, [])
 
   return (
     <div>
-      <h2>Recover Account</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Recovery Token"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-        />
-        <button type="submit">Recover</button>
-      </form>
+      <h2>Recovering....</h2>
     </div>
   );
 };

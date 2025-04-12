@@ -20,4 +20,8 @@ public class UserService {
     public List<UserOutDto> getUsers(int offset, int size) {
         return mapper.toDtoList(repository.findAllByEnabledIsTrue(PageRequest.of(offset, size)).toList());
     }
+
+    public UserOutDto getUserInfo(String name) {
+        return mapper.toDto(repository.findByUsername(name).orElse(null));
+    }
 }

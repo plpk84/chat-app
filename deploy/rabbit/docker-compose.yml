@@ -1,0 +1,19 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - 15672:15672
+      - 5672:5672
+      - 61613:61613
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    command:
+      bash -c 'rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp &&
+      rabbitmq-server'
+volumes:
+  rabbitmq: { }

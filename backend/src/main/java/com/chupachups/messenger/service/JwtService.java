@@ -4,11 +4,11 @@ import com.chupachups.messenger.model.Jwt;
 import com.chupachups.messenger.model.User;
 import com.chupachups.messenger.repository.JwtRepository;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,6 +28,7 @@ public class JwtService {
     @Value("${auth.jwt.expiration.access-token}")
     private Long accessTokenExpiration;
     @Value("${auth.jwt.expiration.refresh-token}")
+    @Getter
     private Long refreshTokenExpiration;
     private final JwtRepository jwtRepository;
 
@@ -41,15 +42,6 @@ public class JwtService {
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(signingKey));
-    }
-
-    public JwsHeader extractHeader(String token) {
-        return Jwts
-                .parser()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getHeader();
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

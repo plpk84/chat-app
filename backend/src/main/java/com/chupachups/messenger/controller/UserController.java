@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,8 +19,13 @@ public class UserController {
 
     private final UserService userService;
 
+    @GetMapping("/info")
+    public ResponseEntity<UserOutDto> getUserInfo(Principal principal) {
+        return ResponseEntity.ok(userService.getUserInfo(principal.getName()));
+    }
+
     @GetMapping()
     public ResponseEntity<List<UserOutDto>> getUsers(@RequestParam int offset, @RequestParam int size) {
-        return ResponseEntity.ok(userService.getUsers(offset,size));
+        return ResponseEntity.ok(userService.getUsers(offset, size));
     }
 }

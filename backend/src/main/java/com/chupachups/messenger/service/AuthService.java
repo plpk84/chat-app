@@ -4,6 +4,7 @@ import com.chupachups.messenger.dto.jwt.JwtDto;
 import com.chupachups.messenger.dto.user.UserLoginDto;
 import com.chupachups.messenger.dto.user.UserRegistrationDto;
 import com.chupachups.messenger.dto.user.UserStatusDto;
+import com.chupachups.messenger.exception.RefreshTokenException;
 import com.chupachups.messenger.mapper.UserMapper;
 import com.chupachups.messenger.model.Status;
 import com.chupachups.messenger.repository.UserRepository;
@@ -110,9 +111,10 @@ public class AuthService {
         messagingTemplate.convertAndSend("/topic/public", new UserStatusDto(principal, Status.OFFLINE));
     }
 
-    public JwtDto refreshToken(String principal) {
-        var user = userRepository.findByUsername(principal).orElseThrow(
-                () -> new RuntimeException("User not found")
+    public JwtDto refreshToken(String token) {
+        String username = jwtService.extractUsername(token);
+        var user = userRepository.findByUsername(username).orElseThrow(
+                () -> new RefreshTokenException("User not found")
         );
         jwtService.deleteAllUserToken(user);
         var accessToken = jwtService.generateAccessToken(user);

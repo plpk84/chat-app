@@ -24,7 +24,7 @@ body {
     border-radius: 8px;
 }
 
-.users-list {
+.left-panel {
     flex: 1;
     border-right: 1px solid #ccc;
     padding: 20px;
@@ -62,39 +62,6 @@ body {
     border-bottom-right-radius: 8px;
 }
 
-.messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    margin-bottom: 15px;
-
-    display: flex;
-    flex-direction: column;
-}
-
-.message {
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 12px;
-    max-width: 70%;
-    min-width: 50px;
-    word-break: break-word;
-    box-sizing: border-box;
-}
-
-.message.sent {
-    background-color: #3498db;
-    color: white;
-    align-self: flex-end;
-}
-
-.message.received {
-    background-color: #ecf0f1;
-    color: #333;
-    align-self: flex-start;
-}
 
 .input-area {
     display: flex;

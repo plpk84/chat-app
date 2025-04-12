@@ -1,7 +1,6 @@
-import React, { useState,useContext } from "react";
-import { registerUser } from "../services/api";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../contexts/AuthContext";
+import React, {useContext, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {AuthContext} from "../contexts/AuthProvider";
 import "../styles/Chat.css"
 
 const RegisterPage = () => {
@@ -10,19 +9,18 @@ const RegisterPage = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const {register} = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await registerUser({
+      await register({
         username,
         password,
         first_name: firstName,
         last_name: lastName,
       });
       alert("Registration successful!");
-      login(response.data)
       navigate("/");
     } catch (error) {
       alert("Error during registration.");

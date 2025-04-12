@@ -1,0 +1,81 @@
+services:
+  configsvr:
+    image: mongo:latest
+    command: mongod --configsvr --replSet configReplSet --port 27017 --bind_ip_all
+    hostname: configsvr
+    container_name: configsvr
+    networks:
+      - mongodb-network
+    ports:
+      - 27017:27017
+    volumes:
+      - configsvr:/data/db
+      - ./init-configsvr.sh:/docker-entrypoint-initdb.d/init-configsvr.sh
+    entrypoint: [ "bash","/docker-entrypoint-initdb.d/init-configsvr.sh" ]
+
+  shard1:
+    image: mongo:latest
+    command: mongod --shardsvr --replSet shard1ReplSet --port 27018 --bind_ip_all
+    container_name: shard1
+    hostname: shard1
+    networks:
+      - mongodb-network
+    ports:
+      - 27018:27018
+    volumes:
+      - shard1:/data/db
+      - ./init-shard1.sh:/docker-entrypoint-initdb.d/init-shard1.sh
+    entrypoint: [ "bash","/docker-entrypoint-initdb.d/init-shard1.sh" ]
+
+  shard2:
+    image: mongo:latest
+    command: mongod --shardsvr --replSet shard2ReplSet --port 27019 --bind_ip_all
+    container_name: shard2
+    hostname: shard2
+    networks:
+      - mongodb-network
+    ports:
+      - 27019:27019
+    volumes:
+      - shard2:/data/shard2
+      - ./init-shard2.sh:/docker-entrypoint-initdb.d/init-shard2.sh
+    entrypoint: [ "bash","/docker-entrypoint-initdb.d/init-shard2.sh" ]
+
+  mongos:
+    image: mongo:latest
+    container_name: mongos
+    networks:
+      - mongodb-network
+    depends_on:
+      - configsvr
+      - shard1
+      - shard2
+    command: >
+      mongos --configdb configReplSet/configsvr:27017 --bind_ip_all --port 27020
+    ports:
+      - 27020:27020
+    volumes:
+      - mongos:/data/mongos
+      - ./init-mongos.sh:/docker-entrypoint-initdb.d/init-mongos.sh
+    entrypoint: [ "bash","/docker-entrypoint-initdb.d/init-mongos.sh" ]
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo_express
+    restart: always
+    networks:
+      - mongodb-network
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://root:root@mongos:27020/
+      - ME_CONFIG_BASICAUTH=false
+volumes:
+  configsvr:
+  shard1:
+  shard2:
+  mongos:
+
+networks:
+  mongodb-network:
+    driver: bridge
