@@ -1,8 +1,8 @@
 spring:
   data:
     mongodb:
-#      username: root
-      #      password: root
+      username: root
+      password: root
       host: localhost
       port: 27020
       database: messenger
@@ -20,6 +20,13 @@ auth:
       access-token: 5000 #1800000 # 30 min
       refresh-token: 604800000 # 1 week
   url: /api/v1/auth
+storage:
+  endpoint: http://127.0.0.1:9000
+  username: minioadmin
+  password: minioadmin
+  region: ru-central1
+  bucket: avatar
+
 logging:
   level:
     org.springframework.web: DEBUG

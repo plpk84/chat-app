@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 
@@ -26,8 +27,12 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/register")
-    public ResponseEntity<JwtOutDto> register(@RequestBody UserRegistrationDto register, HttpServletResponse response) {
-        var result = authService.register(register);
+    public ResponseEntity<JwtOutDto> register(
+            @RequestPart("user") UserRegistrationDto register,
+            @RequestPart(value = "avatar", required = false) MultipartFile avatar,
+            HttpServletResponse response
+    ) {
+        var result = authService.register(register, avatar);
         setRefreshTokenCookie(response, result.refreshToken());
         return ResponseEntity.ok(new JwtOutDto(result.accessToken(), result.user()));
     }

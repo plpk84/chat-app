@@ -83,6 +83,7 @@ body {
     border-radius: 25px;
     cursor: pointer;
 }
+
 .user-form {
     max-width: 400px;
     padding: 40px;
@@ -90,6 +91,24 @@ body {
     background-color: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+}
+
+.image {
+    position: relative;
+    overflow: hidden;
+    width: 250px;
+    height: 150px;
+}
+
+.image img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .user-form h2 {

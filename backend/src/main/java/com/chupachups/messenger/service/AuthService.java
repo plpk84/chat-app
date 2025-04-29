@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -27,10 +28,14 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MinioService minioService;
 
-    public JwtDto register(UserRegistrationDto register) {
+    public JwtDto register(UserRegistrationDto register, MultipartFile avatar) {
         var user = userMapper.toEntity(register);
         user.setPassword(passwordEncoder.encode(register.getPassword()));
+        if (avatar != null && !avatar.isEmpty()) {
+            user.setAvatarUrl(minioService.saveToStorage(avatar));
+        }
         user = userRepository.save(user);
         authenticate(register.getUsername(), register.getPassword());
         var accessToken = jwtService.generateAccessToken(user);

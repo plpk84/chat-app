@@ -1,6 +1,7 @@
 package com.chupachups.messenger.model;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,6 +24,7 @@ public class User implements UserDetails {
     private Status status = Status.ONLINE;
     @Builder.Default
     private boolean enabled = true;
+    private String avatarUrl;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

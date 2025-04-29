@@ -9,6 +9,8 @@ public record UserOutDto(
         String firstName,
         @JsonProperty(value = "last_name")
         String lastName,
-        Status status
+        Status status,
+        @JsonProperty(value = "avatar_url")
+        String avatarUrl
 ) {
 }

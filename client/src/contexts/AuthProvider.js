@@ -96,7 +96,11 @@ export const AuthProvider = ({children}) => {
 
   const register = async (userData) => {
     try {
-      const response = await api.post(`/auth/register`, userData);
+      const response = await api.post(`/auth/register`, userData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       const {access_token, user} = response.data
       setAuthState({
         user: user,

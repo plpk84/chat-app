@@ -16,6 +16,7 @@
 		<org.lombok.version>1.18.30</org.lombok.version>
 		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
 		<org.project.lombok.binding.version>0.2.0</org.project.lombok.binding.version>
+		<minio.version>8.5.17</minio.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -85,6 +86,13 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 			<version>${org.lombok.version}</version>
+		</dependency>
+
+		<!-- MinIo-->
+		<dependency>
+			<groupId>io.minio</groupId>
+			<artifactId>minio</artifactId>
+			<version>${minio.version}</version>
 		</dependency>
 	</dependencies>
 

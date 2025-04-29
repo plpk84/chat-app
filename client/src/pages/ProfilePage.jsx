@@ -26,6 +26,10 @@ const ProfilePage = () => {
   return (
     <div className="user-form">
       <h2>Profile</h2>
+      <div className={"image"}>
+        <img src={authState.user?.avatar_url ? authState.user.avatar_url : require("../img/user_icon.png")}
+             alt={"nophoto"}></img>
+      </div>
       <p>Username: {authState.user ? authState.user.username : `Loading...`}</p>
       <p>Name: {authState.user ? `${authState.user.first_name} ${authState.user.last_name}` : `Loading....`}</p>
       <button onClick={handleChat}>To chat</button>
