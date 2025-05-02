@@ -1,7 +1,7 @@
 package com.chupachups.messenger.controller;
 
+import com.chupachups.messenger.mapper.ChatMessageMapper;
 import com.chupachups.messenger.model.ChatMessage;
-import com.chupachups.messenger.model.ChatNotification;
 import com.chupachups.messenger.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,18 +23,14 @@ public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageService chatMessageService;
+    private final ChatMessageMapper mapper;
 
     @MessageMapping("/chat")
     public void processMessage(@Payload ChatMessage chatMessage) {
         ChatMessage savedMsg = chatMessageService.save(chatMessage);
         messagingTemplate.convertAndSend(
                 "/queue/" + chatMessage.getRecipientId() + ".messages",
-                new ChatNotification(
-                        savedMsg.getId(),
-                        savedMsg.getSenderId(),
-                        savedMsg.getRecipientId(),
-                        savedMsg.getContent()
-                )
+                mapper.toDto(savedMsg)
         );
     }
 

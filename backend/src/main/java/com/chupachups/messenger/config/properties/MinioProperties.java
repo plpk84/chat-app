@@ -12,5 +12,6 @@ public class MinioProperties {
     private String username;
     private String password;
     private String region;
-    private String bucket;
+    private String avatarBucket;
+    private String fileBucket;
 }

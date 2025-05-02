@@ -23,30 +23,30 @@ public class MinioService {
     private final MinioProperties minioProperties;
 
     @SneakyThrows
-    public String saveToStorage(MultipartFile file) {
+    public String saveToStorage(MultipartFile file, String bucketName) {
 
         byte[] fileBytes = file.getBytes();
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes)) {
             String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
             minioClient.putObject(
                     PutObjectArgs.builder()
-                            .bucket(minioProperties.getBucket())
+                            .bucket(bucketName)
                             .object(fileName)
                             .stream(inputStream, fileBytes.length, -1)
                             .contentType(file.getContentType())
                             .build()
             );
-            log.info(">> Изображение {} загружено в Minio", fileName);
+            log.info(">> Файл {} загружен в Minio", fileName);
 
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
-                            .bucket(minioProperties.getBucket())
+                            .bucket(bucketName)
                             .object(fileName)
                             .build()
             );
         } catch (Exception e) {
-            log.error(">> Ошибка при загрузке изображения {}", e.getMessage());
+            log.error(">> Ошибка при загрузке файла {}", e.getMessage());
             throw e;
         }
     }

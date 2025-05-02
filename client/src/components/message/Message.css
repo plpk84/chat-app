@@ -2,7 +2,6 @@
 .messages {
     flex: 1;
     overflow-y: auto;
-    /*overflowY: 'scroll';*/
     padding: 10px;
     border: 1px solid #eee;
     border-radius: 8px;
@@ -10,9 +9,6 @@
 
     display: flex;
     flex-direction: column-reverse;
-    /*justify-content: flex-end;*/
-    /*max-height: 500px;*/
-
     align-items: flex-start;
 
 }
@@ -33,8 +29,33 @@
     align-self: flex-end;
 }
 
+.message.sent a {
+    color: white;
+}
+
 .message.received {
     background-color: #ecf0f1;
     color: #333;
     align-self: flex-start;
+}
+
+.message.received a {
+    color: #333;
+}
+
+.message img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+
+.message a {
+    text-decoration: none;
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.message a:hover {
+    text-decoration: underline;
 }

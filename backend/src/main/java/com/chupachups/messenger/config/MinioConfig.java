@@ -22,13 +22,21 @@ public class MinioConfig {
                 .credentials(properties.getUsername(), properties.getPassword())
                 .region(properties.getRegion())
                 .build();
-        boolean bucketExists = minioClient
-                .bucketExists(BucketExistsArgs.builder()
-                        .bucket(properties.getBucket())
-                        .build());
-        if (!bucketExists) {
+        if (!minioClient.bucketExists(BucketExistsArgs.builder()
+                .bucket(properties.getAvatarBucket())
+                .build())
+        ) {
             minioClient.makeBucket(MakeBucketArgs.builder()
-                    .bucket(properties.getBucket())
+                    .bucket(properties.getAvatarBucket())
+                    .build()
+            );
+        }
+        if (!minioClient.bucketExists(BucketExistsArgs.builder()
+                .bucket(properties.getFileBucket())
+                .build())
+        ) {
+            minioClient.makeBucket(MakeBucketArgs.builder()
+                    .bucket(properties.getFileBucket())
                     .build()
             );
         }

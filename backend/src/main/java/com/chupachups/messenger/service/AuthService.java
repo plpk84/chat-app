@@ -1,5 +1,6 @@
 package com.chupachups.messenger.service;
 
+import com.chupachups.messenger.config.properties.MinioProperties;
 import com.chupachups.messenger.dto.jwt.JwtDto;
 import com.chupachups.messenger.dto.user.UserLoginDto;
 import com.chupachups.messenger.dto.user.UserRegistrationDto;
@@ -29,12 +30,13 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final SimpMessagingTemplate messagingTemplate;
     private final MinioService minioService;
+    private final MinioProperties minioProperties;
 
     public JwtDto register(UserRegistrationDto register, MultipartFile avatar) {
         var user = userMapper.toEntity(register);
         user.setPassword(passwordEncoder.encode(register.getPassword()));
         if (avatar != null && !avatar.isEmpty()) {
-            user.setAvatarUrl(minioService.saveToStorage(avatar));
+            user.setAvatarUrl(minioService.saveToStorage(avatar, minioProperties.getAvatarBucket()));
         }
         user = userRepository.save(user);
         authenticate(register.getUsername(), register.getPassword());

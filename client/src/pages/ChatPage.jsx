@@ -24,7 +24,9 @@ const ChatPage = () => {
   const [messageOffset, setMessageOffset] = useState(0);
   const messagesContainerRef = useRef(null);
   const [messageFetching, setMessageFetching] = useState(false);
-  const [allMessageFetched, setAllMessageFetched] = useState(false)
+  const [allMessageFetched, setAllMessageFetched] = useState(false);
+  const [file, setFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!authState.accessToken) {
@@ -228,6 +230,7 @@ const ChatPage = () => {
       senderId: authState.user.username,
       recipientId: selectedUser.username,
       content: messageText,
+      isFile: false,
       timestamp: new Date()
     };
 
@@ -238,6 +241,62 @@ const ChatPage = () => {
 
     setMessages([message, ...messages])
     setMessageText("");
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      sendFile(selectedFile);
+    }
+  };
+
+  const sendFile = async (fileToSend) => {
+    if (!fileToSend || !selectedUser?.username) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', fileToSend);
+
+      const response = await api.post(`/files`, formData, {
+        headers: {
+          Authorization: `Bearer ${authState.accessToken}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      const fileUrl = response.data.url;
+
+      const message = {
+        senderId: authState.user.username,
+        recipientId: selectedUser.username,
+        content: fileUrl,
+        isFile: true,
+        fileName: fileToSend.name,
+        fileType: fileToSend.type,
+        timestamp: new Date()
+      };
+
+      if (client && client.connected) {
+        client.publish({
+          destination: "/app/chat",
+          body: JSON.stringify(message)
+        });
+
+        setMessages([message, ...messages]);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    } finally {
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current.click();
   };
 
   return (
@@ -270,6 +329,19 @@ const ChatPage = () => {
                        user={authState.user}
           />
           <div className="input-area">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              style={{display: 'none'}}
+              accept="image/*, .pdf, .doc, .docx, .txt"
+            />
+            <button
+              onClick={handleFileButtonClick}
+              className="file-button"
+            >
+              Send File
+            </button>
             <input
               type="text"
               value={messageText}

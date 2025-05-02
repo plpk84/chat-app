@@ -25,7 +25,8 @@ storage:
   username: minioadmin
   password: minioadmin
   region: ru-central1
-  bucket: avatar
+  avatar-bucket: avatar
+  file-bucket: file
 
 logging:
   level:
