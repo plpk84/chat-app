@@ -59,7 +59,6 @@ export const AuthProvider = ({children}) => {
               isLoading: false
             });
 
-            console.log(`Retry request`)
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
             return api.request(originalRequest);
           } catch (refreshError) {

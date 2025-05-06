@@ -17,4 +17,5 @@ public class ChatMessageDto {
     private Boolean isFile;
     private String fileName;
     private String fileType;
+    private String timestamp;
 }

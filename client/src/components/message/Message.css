@@ -23,7 +23,25 @@
     box-sizing: border-box;
 }
 
-.message.sent {
+.message-content {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.message-time {
+    font-size: 0.7em;
+    text-align: right;
+    margin-top: 2px;
+    padding-right: 5px;
+}
+
+.message-date {
+    margin-left: 5px;
+    opacity: 0.8;
+}
+
+.sent {
     background-color: #3498db;
     color: white;
     align-self: flex-end;
@@ -33,7 +51,7 @@
     color: white;
 }
 
-.message.received {
+.received {
     background-color: #ecf0f1;
     color: #333;
     align-self: flex-start;
