@@ -1,22 +1,21 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import SockJS from 'sockjs-client';
 import {Client} from '@stomp/stompjs';
+import {AuthContext} from "../contexts/AuthProvider";
 
 export const useWebSocket = ({
-                               authState,
                                onDirectMessage,
                                onPublicMessage
                              }) => {
+  const {authState} = useContext(AuthContext);
   const [client, setClient] = useState(null);
-  const [subscriptions, setSubscriptions] = useState([]);
+  const subscriptionsRef = useRef([]);
 
   useEffect(() => {
     if (!authState.accessToken) {
-      if (client) {
-        client.deactivate().then(() => {
-          setClient(null);
-        });
-      }
+      return;
+    }
+    if (client && client.connected) {
       return;
     }
     const getConnection = async () => {
@@ -26,41 +25,46 @@ export const useWebSocket = ({
         webSocketFactory: () => socket,
         connectHeaders: {
           Authorization: `Bearer ${authState.accessToken}`,
-          'heart-beat': '3000,3000'
+          'heart-beat': '2000,2000'
         },
+        reconnectDelay: 2000,
+        heartbeatIncoming: 2000,
+        heartbeatOutgoing: 5000,
         onConnect: () => {
+          console.log(`Connected to WebSocket`)
           const publicSub = client.subscribe(
             '/topic/public',
             onPublicMessage,
             {id: `${authState.user.username}-public-subscription`}
           );
-
           const directMessagesSub = client.subscribe(
             `/queue/${authState.user.username}.messages`,
             onDirectMessage,
             {id: `${authState.user.username}-direct-messages-subscription`}
           );
 
-          setSubscriptions([publicSub, directMessagesSub]);
+          subscriptionsRef.current = [publicSub, directMessagesSub];
         },
         onStompError: (err) => {
           console.error("WebSocket error:", err);
         },
         onDisconnect: () => {
+          console.log(`Subs size = ${subscriptionsRef.current.length}`)
+          subscriptionsRef.current.forEach(async sub => {
+
+            const response = sub.unsubscribe(
+              {
+                Authorization: `Bearer ${authState.accessToken}`
+              }
+            );
+            console.log(response)
+          });
           console.log(`Disconnected from WebSocket`)
-          subscriptions.forEach(sub => sub.unsubscribe(
-            {
-              Authorization: `Bearer ${authState.accessToken}`
-            }
-          ));
-          setSubscriptions([]);
-        },
-        reconnectDelay: 3000,
-        heartbeatIncoming: 3000,
-        heartbeatOutgoing: 3000
+          subscriptionsRef.current = [];
+        }
       });
-      setClient(client);
       client.activate();
+      setClient(client);
 
     }
     getConnection();

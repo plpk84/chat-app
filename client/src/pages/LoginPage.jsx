@@ -7,7 +7,7 @@ const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const {login} = useContext(AuthContext);
+  const {login, recoverUser} = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,6 +22,16 @@ const LoginPage = () => {
 
   const handleRegister = () => {
     navigate("/register");
+  }
+
+  const handleRecover = async () => {
+    try {
+      await recoverUser();
+      alert("Account recovered successfully!");
+    } catch (error) {
+      alert("No recovery token.");
+      navigate("/register")
+    }
   }
 
   return (
@@ -42,6 +52,7 @@ const LoginPage = () => {
         />
         <button type="submit">Login</button>
         <button type="button" onClick={handleRegister}>Register</button>
+        <button type="button" onClick={handleRecover}>Recover</button>
       </form>
     </div>
   );

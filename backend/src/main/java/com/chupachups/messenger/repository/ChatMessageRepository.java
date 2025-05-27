@@ -7,4 +7,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
     Page<ChatMessage> findByChatId(String chatId, PageRequest pageRequest);
+
+    void deleteAllByChatId(String chatId);
 }

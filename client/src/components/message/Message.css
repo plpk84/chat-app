@@ -42,7 +42,7 @@
 }
 
 .sent {
-    background-color: #3498db;
+    background-color: #286704;
     color: white;
     align-self: flex-end;
 }
@@ -76,4 +76,26 @@
 
 .message a:hover {
     text-decoration: underline;
+}
+
+.message-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+}
+
+.delete-messages-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 16px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.delete-messages-button:hover {
+    color: #ff4444;
+    background-color: #f0f0f0;
 }

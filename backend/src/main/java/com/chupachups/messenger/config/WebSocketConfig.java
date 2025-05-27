@@ -42,7 +42,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setClientLogin(username)
                 .setClientPasscode(password)
                 .setSystemLogin(username)
-                .setSystemPasscode(password);
+                .setSystemPasscode(password)
+                .setSystemHeartbeatSendInterval(5000)
+                .setSystemHeartbeatReceiveInterval(4000);
+
         registry.setApplicationDestinationPrefixes("/app");
     }
 

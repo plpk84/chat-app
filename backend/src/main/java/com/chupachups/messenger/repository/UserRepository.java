@@ -1,6 +1,5 @@
 package com.chupachups.messenger.repository;
 
-import com.chupachups.messenger.model.Status;
 import com.chupachups.messenger.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,4 +11,6 @@ import java.util.Optional;
 public interface UserRepository  extends MongoRepository<User, String> {
     Optional<User> findByUsername(String username);
     Page<User> findAllByEnabledIsTrue(PageRequest pageRequest);
+
+    Page<User> findByUsernameIn(List<String> usernames, PageRequest pageRequest);
 }

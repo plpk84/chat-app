@@ -1,7 +1,7 @@
 package com.chupachups.messenger.service;
 
-import com.chupachups.messenger.repository.ChatRoomRepository;
 import com.chupachups.messenger.model.ChatRoom;
+import com.chupachups.messenger.repository.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,39 +18,23 @@ public class ChatRoomService {
             String recipientId,
             boolean createNewRoomIfNotExists
     ) {
-        return chatRoomRepository
-                .findBySenderIdAndRecipientId(senderId, recipientId)
+        return chatRoomRepository.findByChatId(String.format("%s_%s", senderId, recipientId))
+                .or(() -> chatRoomRepository.findByChatId(String.format("%s_%s", recipientId, senderId)))
                 .map(ChatRoom::getChatId)
                 .or(() -> {
-                    if(createNewRoomIfNotExists) {
-                        var chatId = createChatId(senderId, recipientId);
+                    if (createNewRoomIfNotExists) {
+                        var chatId = String.format("%s_%s", senderId, recipientId);
+                        var chatRoom = ChatRoom.builder()
+                                .chatId(chatId)
+                                .build();
+                        chatRoomRepository.save(chatRoom);
                         return Optional.of(chatId);
                     }
-
-                    return  Optional.empty();
+                    return Optional.empty();
                 });
     }
 
-    private String createChatId(String senderId, String recipientId) {
-        var chatId = String.format("%s_%s", senderId, recipientId);
-
-        ChatRoom senderRecipient = ChatRoom
-                .builder()
-                .chatId(chatId)
-                .senderId(senderId)
-                .recipientId(recipientId)
-                .build();
-
-        ChatRoom recipientSender = ChatRoom
-                .builder()
-                .chatId(chatId)
-                .senderId(recipientId)
-                .recipientId(senderId)
-                .build();
-
-        chatRoomRepository.save(senderRecipient);
-        chatRoomRepository.save(recipientSender);
-
-        return chatId;
+    public void deleteChatRoom(String chatId) {
+        chatRoomRepository.deleteByChatId(chatId);
     }
 }
