@@ -1,6 +1,5 @@
 package com.chupachups.messenger.service;
 
-import com.chupachups.messenger.config.properties.MinioProperties;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -20,7 +19,6 @@ import java.util.UUID;
 public class MinioService {
 
     private final MinioClient minioClient;
-    private final MinioProperties minioProperties;
 
     @SneakyThrows
     public String saveToStorage(MultipartFile file, String bucketName) {

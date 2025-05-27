@@ -5,6 +5,8 @@ import com.chupachups.messenger.model.ChatMessage;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 import static org.mapstruct.InjectionStrategy.CONSTRUCTOR;
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
@@ -13,4 +15,6 @@ public interface ChatMessageMapper {
 
     @Mapping(target = "timestamp", source = "timestamp", dateFormat = "MM.dd.yyyy, HH:mm")
     ChatMessageDto toDto(ChatMessage entity);
+
+    List<ChatMessageDto> toDtoList(List<ChatMessage> entity);
 }

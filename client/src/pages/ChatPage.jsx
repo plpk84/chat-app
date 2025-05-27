@@ -13,10 +13,10 @@ const ChatPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [notificationCount, setNotificationCount] = useState({});
-  const [contactsOffset, setContactsOffset] = useState(0);
   const [messageOffset, setMessageOffset] = useState(0);
   const [messageFetching, setMessageFetching] = useState(false);
   const [allMessageFetched, setAllMessageFetched] = useState(false);
+  const [contactsFetched, setContactsFetched] = useState(false);
   const messagesContainerRef = useRef(null);
   const navigate = useNavigate();
   const onDirectMessage = (message) => {
@@ -37,28 +37,27 @@ const ChatPage = () => {
     ));
   };
 
-  const client = useWebSocket({authState, onDirectMessage, onPublicMessage});
+  const client = useWebSocket({onDirectMessage, onPublicMessage});
   const loadContacts = async () => {
-    const response = await api.get(`/users`, {
-      params: {offset: contactsOffset, size: 3},
+    const response = await api.get(`/users/${authState.user.username}/contacts`, {
+      params: {offset: 0, size: 3},
       headers: {Authorization: `Bearer ${authState.accessToken}`},
     });
-    if (authState.user) {
-      setUsers(response.data.filter(u => u.username !== authState.user.username));
-    }
+    setContactsFetched(true);
+    setUsers(response.data.filter(u => u.username !== authState?.user.username));
   };
 
   useEffect(() => {
-    if (authState.accessToken) {
+    if (authState.accessToken && !contactsFetched) {
       loadContacts();
     }
-  }, [authState.accessToken]);
+  }, [authState.accessToken, contactsFetched]);
 
 
   const loadMessages = async (username) => {
     const response = await api.get(`/messages/${authState.user.username}/${username}`, {
       headers: {Authorization: `Bearer ${authState.accessToken}`},
-      params: {offset: messageOffset, size: 20},
+      params: {offset: messageOffset, size: 100},
     });
 
     const length = response.data.length;
@@ -73,11 +72,8 @@ const ChatPage = () => {
   };
 
   const handleScroll = () => {
-    if (messagesContainerRef.current.scrollTop < -82) {
+    if (messagesContainerRef.current.scrollHeight - 433 + messagesContainerRef.current.scrollTop < 200) {
       setMessageFetching(true);
-    }
-    if (messagesContainerRef.current.scrollTop <= 0 && messagesContainerRef.current.scrollTop >= -20) {
-      resetNewMessagesCounter();
     }
   };
 
@@ -103,21 +99,26 @@ const ChatPage = () => {
       setMessageOffset(0);
       setMessages([]);
     }
-    resetNewMessagesCounter();
+    resetNewMessagesCounter(user);
+    setTimeout(() => {
+      messagesContainerRef.current.scrollTop = 0;
+    }, 5)
+
   };
 
-  const resetNewMessagesCounter = () => {
-    if (selectedUser) {
-      setNotificationCount(prev => ({
-        ...prev,
-        [selectedUser.username]: 0,
-      }));
-    }
+  const resetNewMessagesCounter = (selectedUser) => {
+    setNotificationCount(prev => ({
+      ...prev,
+      [selectedUser.username]: 0,
+    }));
   };
 
   const handleSendMessage = (text) => {
-    if (!client?.connected || !selectedUser) return;
-
+    if (!selectedUser) return;
+    if (!client?.connected) {
+      console.log(`Client disconnected`);
+      return;
+    }
     const message = {
       senderId: authState.user.username,
       recipientId: selectedUser.username,
@@ -135,7 +136,11 @@ const ChatPage = () => {
   };
 
   const handleSendFile = async (file) => {
-    if (!client?.connected || !selectedUser) return;
+    if (!selectedUser) return;
+    if (!client?.connected) {
+      console.log(`Client disconnected`);
+      return;
+    }
 
     const formData = new FormData();
     formData.append('file', file);
@@ -176,10 +181,15 @@ const ChatPage = () => {
     navigate("/login");
   };
 
-  const handleProfile = () => {
-    if (client) client.deactivate();
+  const handleProfile = async () => {
+    if (client) await client.deactivate();
     navigate("/");
   };
+
+  const handleDeleteMessages = async () => {
+    await api.delete(`/messages/${authState.user.username}/${selectedUser.username}`)
+    setSelectedUser(null);
+  }
 
   return (
     <div className="chat-container">
@@ -199,7 +209,9 @@ const ChatPage = () => {
         selectedUser={selectedUser}
         onSendMessage={handleSendMessage}
         onSendFile={handleSendFile}
+        onDeleteMessages={handleDeleteMessages}
         messagesContainerRef={messagesContainerRef}
+        onMouseEnter={() => selectedUser && resetNewMessagesCounter(selectedUser)}
       />
     </div>
   );

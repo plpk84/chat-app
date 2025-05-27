@@ -7,6 +7,7 @@ const UserList = ({users, notificationCount, selectedUsername, handleClick}) => 
     <ul>
       {users.map((u) => (
         <li
+          key={u.username}
           className={`user-item ${u.username === selectedUsername ? "active" : ""}`}
           onClick={async () => await handleClick(u)}
         >

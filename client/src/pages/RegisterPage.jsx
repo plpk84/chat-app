@@ -74,7 +74,7 @@ const RegisterPage = () => {
         <input
           type="file"
           accept="image/*"
-          onChange={(e) => setAvatar(e.target.files[0])} // Сохраняем файл
+          onChange={(e) => setAvatar(e.target.files[0])}
         />
         <button type="submit">Register</button>
         <button type="button" onClick={handleLogin}>Login</button>

@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,6 +26,8 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean enabled = true;
     private String avatarUrl;
+    @Builder.Default
+    private List<String> contacts = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
